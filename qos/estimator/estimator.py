@@ -6,7 +6,7 @@ import joblib
 
 from qos.types.types import Engine, Qernel
 import qos.database as db
-from data.ibm_token import IBM_TOKEN
+from settings.ibm_token import IBM_TOKEN
 
 from qiskit_ibm_runtime.fake_provider import *
 from qiskit_ibm_provider import IBMProvider

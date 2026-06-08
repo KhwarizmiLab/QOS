@@ -822,7 +822,7 @@ class MultiObjectiveScheduler(BaseScheduler):
                 backend_queue_waiting_times.append(backend.get_waiting_time())
             # Otherwise, use the average job time for estimation
             else:
-                backend_queue_waiting_times.append(backend.status().pending_jobs * time)
+                backend_queue_waiting_times.append(backend.status().pending_jobs * 60.0)
      
         return anp.array(backend_queue_waiting_times)
 

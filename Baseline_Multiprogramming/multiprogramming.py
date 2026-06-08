@@ -1,4 +1,4 @@
-from qos.types import Qernel
+from qos.types.types import Qernel
 from qos.error_mitigator.analyser import BasicAnalysisPass
 from qiskit import QuantumCircuit
 

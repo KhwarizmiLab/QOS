@@ -1,0 +1,17 @@
+{
+  "experiment_id": "sim_001",
+  "timestamp": "2026-06-01T11:28:34",
+  "type": "simulator",
+  "description": "Initial 8-job validation run on 4 AerSimulator backends",
+  "config": {
+    "num_jobs": 8,
+    "num_backends": 4,
+    "backend_type": "AerSimulator"
+  },
+  "results_file": "data/results.json",
+  "plots": [
+    "plots/evaluation_20260601_112846.png",
+    "plots/evaluation_20260601_112846.pdf"
+  ],
+  "status": "completed"
+}

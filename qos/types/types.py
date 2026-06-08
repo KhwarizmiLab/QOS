@@ -5,7 +5,7 @@ from qos.backends.types import QPU
 from qvm.virtual_circuit import VirtualCircuit
 from qvm.quasi_distr import *
 from qiskit import dagcircuit, QuantumCircuit
-from ..dag import DAG
+from qvm.compiler.dag import DAG
 #from qos.distributed_transpiler.types import AnalysisPass
 #from qos.distributed_transpiler.types import TransformationPass
 
