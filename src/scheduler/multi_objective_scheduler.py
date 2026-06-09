@@ -12,7 +12,6 @@ from mapomatic import deflate_circuit, matching_layouts
 from numpy import argmin
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.algorithm import Algorithm
-from pymoo.core.problem import StarmapParallelization
 from pymoo.core.result import Result
 from pymoo.mcdm.pseudo_weights import PseudoWeights
 from pymoo.operators.crossover.pntx import TwoPointCrossover
@@ -28,7 +27,7 @@ from pymoo.optimize import minimize
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import Measure, Reset, Gate
 from qiskit.providers import Backend
-from qiskit_ibm_runtime.fake_provider import *
+from qiskit.providers.fake_provider import FakeBackend
 
 from src.execution_time.base_estimator import BaseEstimator
 from src.execution_time.regression_estimator import RegressionEstimator
@@ -200,7 +199,7 @@ class MultiObjectiveScheduler(BaseScheduler):
 
         num_threads = int(multiprocessing.cpu_count() / 2)
         pool = ThreadPool(num_threads)
-        runner = StarmapParallelization(pool.starmap)
+        runner = None
         if self.problem_type == ProblemType.BINARY:
             problem = BinarySchedulingProblem(
                 len(jobs),
@@ -818,11 +817,14 @@ class MultiObjectiveScheduler(BaseScheduler):
 
         for backend in backends:
             # If the backend is fake, use the patched method
-            if isinstance(backend, FakeBackendV2):
-                backend_queue_waiting_times.append(backend.get_waiting_time())
+            if isinstance(backend, FakeBackend):
+                if hasattr(backend, 'get_waiting_time'):
+                    backend_queue_waiting_times.append(backend.get_waiting_time())
+                else:
+                    backend_queue_waiting_times.append(backend.status().pending_jobs * 60.0)
             # Otherwise, use the average job time for estimation
             else:
-                backend_queue_waiting_times.append(backend.status().pending_jobs * time)
+                backend_queue_waiting_times.append(backend.status().pending_jobs * 60.0)
      
         return anp.array(backend_queue_waiting_times)
 
