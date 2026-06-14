@@ -435,6 +435,7 @@ class MultiObjectiveScheduler(BaseScheduler):
                 [circuit] * self.transpilation_count,
                 backend=backend,
                 optimization_level=3,
+                num_processes=1,
             )
             # Choose the circuit with the lowest number of SWAP gates
             swap_gate = set(backend.operation_names).intersection(
@@ -448,7 +449,7 @@ class MultiObjectiveScheduler(BaseScheduler):
                 return None, 0.0
             swap_gate = swap_gate.pop()
             swap_gate_counts = [
-                transpiled_circuit.count_ops()[swap_gate]
+                transpiled_circuit.count_ops().get(swap_gate, 0)
                 for transpiled_circuit in transpiled_circuits
             ]
             best_transpiled_circuit = transpiled_circuits[
@@ -545,13 +546,14 @@ class MultiObjectiveScheduler(BaseScheduler):
         for backend in backends:
             transpiled_job = None
             fidelity = 0.0
+            bname = backend.name if isinstance(backend.name, str) else backend.name()
             if (
                 self.transpilation_level
                 == TranspilationLevel.PROCESSOR_TYPE
             ):
                 # Transpile the circuit for each processor type
                 if (
-                    processor_types[backend.name]
+                    processor_types[bname]
                     not in processor_type_circuits
                 ):
                     transpiled_circuits = []
@@ -571,14 +573,14 @@ class MultiObjectiveScheduler(BaseScheduler):
                             transpiled_circuits, job.shots
                         )
                         processor_type_circuits[
-                            processor_types[backend.name]
+                            processor_types[bname]
                         ] = transpiled_job
                         fidelity = anp.exp(
                             anp.log(circuit_fidelities).mean()
                         )
                 else:
                     transpiled_job = processor_type_circuits[
-                        processor_types[backend.name]
+                        processor_types[bname]
                     ]
                     circuit_fidelities = []
                     for transpiled_circuit in transpiled_job.circuits:
@@ -657,14 +659,20 @@ class MultiObjectiveScheduler(BaseScheduler):
         transpiled_jobs = []
         fidelities = []
         values = []
-        processor_types = {
-            backend.name: backend.processor_type["family"]
-            + str(backend.processor_type["revision"])
-            + str(backend.processor_type.get("segment", ""))
-            for backend in backends
-        }
+        processor_types = {}
+        for backend in backends:
+            bname = backend.name if isinstance(backend.name, str) else backend.name()
+            pt = getattr(backend, 'processor_type', None)
+            if pt and isinstance(pt, dict) and "family" in pt:
+                processor_types[bname] = (
+                    pt["family"]
+                    + str(pt.get("revision", ""))
+                    + str(pt.get("segment", ""))
+                )
+            else:
+                processor_types[bname] = "unknown"
 
-        with multiprocessing.Pool(processes=int(multiprocessing.cpu_count() / 2)) as pool:
+        with ThreadPool(processes=int(multiprocessing.cpu_count() / 2)) as pool:
             values = pool.starmap(self._transpile_job, [(job, backends, processor_types) for job in jobs])
      
         for v in values:
@@ -816,13 +824,10 @@ class MultiObjectiveScheduler(BaseScheduler):
         backend_queue_waiting_times = []
 
         for backend in backends:
-            # If the backend is fake, use the patched method
-            if isinstance(backend, FakeBackend):
-                if hasattr(backend, 'get_waiting_time'):
-                    backend_queue_waiting_times.append(backend.get_waiting_time())
-                else:
-                    backend_queue_waiting_times.append(backend.status().pending_jobs * 60.0)
-            # Otherwise, use the average job time for estimation
+            if hasattr(backend, 'get_waiting_time'):
+                backend_queue_waiting_times.append(backend.get_waiting_time())
+            elif isinstance(backend, FakeBackend):
+                backend_queue_waiting_times.append(backend.status().pending_jobs * 60.0)
             else:
                 backend_queue_waiting_times.append(backend.status().pending_jobs * 60.0)
      
