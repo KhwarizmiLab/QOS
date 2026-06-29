@@ -106,8 +106,8 @@ def load_qpu_load_data():
 # NOT Qernel — Qernel uses .circuit (singular) and .args["shots"].
 # ---------------------------------------------------------------------------
 
-NUM_JOBS = 10          # paper used 100; reduced for runtime feasibility
-TRANSPILE_COUNT = 3    # paper used 10; reduced for runtime feasibility
+NUM_JOBS = 100         # paper scale: 100 jobs
+TRANSPILE_COUNT = 10   # paper scale: 10 transpilations per circuit
 
 
 def create_jobs(num=NUM_JOBS) -> list[SchedulingJob]:

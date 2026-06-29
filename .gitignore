@@ -42,6 +42,14 @@ evaluation/data/results_*.json
 evaluation/plots/*.pdf
 *.pkl
 *.pickle
+evaluations/sim_*_results/
+cluster_results/
+data/database/
+
+# Credentials (never commit)
+data/ibm_token.py
+settings/ibm_token.py
+**/ibm_token.py
 
 # Temporary
 .DS_Store
